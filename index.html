@@ -7890,6 +7890,10 @@ var _user$project$MouseToColor$view = function (model) {
 				divText(model.color)
 			]));
 };
+var _user$project$MouseToColor$getValue = function (tick) {
+	var v = _elm_lang$core$Basics$abs(tick - 60);
+	return v / 60;
+};
 var _user$project$MouseToColor$fromCenter = F2(
 	function (center, position) {
 		var makePositive = function (a) {
@@ -8017,7 +8021,11 @@ var _user$project$MouseToColor$update = F2(
 					distance / _elm_lang$core$Basics$toFloat(model.center.x),
 					1.0);
 				var color = _user$project$MouseToColor$rgbToHexString(
-					A3(_user$project$MouseToColor$hsvToRgb, angle, relativeDistance, 1.0));
+					A3(
+						_user$project$MouseToColor$hsvToRgb,
+						angle,
+						relativeDistance,
+						_user$project$MouseToColor$getValue(model.tick)));
 				var textColor = _user$project$MouseToColor$rgbToHexString(
 					A3(_user$project$MouseToColor$hsvToRgb, angle, relativeDistance, 0.8));
 				return {
@@ -8027,23 +8035,13 @@ var _user$project$MouseToColor$update = F2(
 						{
 							position: _p8,
 							color: A2(_elm_lang$core$Basics_ops['++'], '#', color),
-							textColor: A2(_elm_lang$core$Basics_ops['++'], '#', textColor),
-							text: A2(
-								_elm_lang$core$Basics_ops['++'],
-								_elm_lang$core$Basics$toString(angle),
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									'     Dist:',
-									A2(
-										_elm_lang$core$Basics_ops['++'],
-										_elm_lang$core$Basics$toString(relativeDistance),
-										A2(_elm_lang$core$Basics_ops['++'], '  COLOR: ', color))))
+							textColor: A2(_elm_lang$core$Basics_ops['++'], '#', textColor)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'Click':
 				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			default:
+			case 'Resize':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -8053,16 +8051,42 @@ var _user$project$MouseToColor$update = F2(
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
+			default:
+				var _p9 = A2(_user$project$MouseToColor$fromCenter, model.center, model.position);
+				var distance = _p9._0;
+				var angle = _p9._1;
+				var relativeDistance = A2(
+					_elm_lang$core$Basics$min,
+					distance / _elm_lang$core$Basics$toFloat(model.center.x),
+					1.0);
+				var tick = A2(_elm_lang$core$Basics_ops['%'], model.tick + 5, 120);
+				var value = _user$project$MouseToColor$getValue(tick);
+				var color = _user$project$MouseToColor$rgbToHexString(
+					A3(_user$project$MouseToColor$hsvToRgb, angle, relativeDistance, value));
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							tick: tick,
+							color: A2(_elm_lang$core$Basics_ops['++'], '#', color),
+							text: _elm_lang$core$Basics$toString(value)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 		}
 	});
 var _user$project$MouseToColor$Size = F2(
 	function (a, b) {
 		return {height: a, width: b};
 	});
-var _user$project$MouseToColor$Model = F5(
-	function (a, b, c, d, e) {
-		return {position: a, center: b, color: c, textColor: d, text: e};
+var _user$project$MouseToColor$Model = F6(
+	function (a, b, c, d, e, f) {
+		return {position: a, center: b, color: c, tick: d, textColor: e, text: f};
 	});
+var _user$project$MouseToColor$Tick = function (a) {
+	return {ctor: 'Tick', _0: a};
+};
 var _user$project$MouseToColor$Resize = function (a) {
 	return {ctor: 'Resize', _0: a};
 };
@@ -8074,6 +8098,7 @@ var _user$project$MouseToColor$init = function () {
 			position: A2(_user$project$MouseToColor$Position, 0, 0),
 			center: A2(_user$project$MouseToColor$Position, 0, 0),
 			color: '#fff',
+			tick: 0,
 			textColor: '#000',
 			text: 'test'
 		},
@@ -8089,7 +8114,8 @@ var _user$project$MouseToColor$subscriptions = function (model) {
 		_elm_lang$core$Native_List.fromArray(
 			[
 				_elm_lang$mouse$Mouse$moves(_user$project$MouseToColor$Move),
-				_elm_lang$window$Window$resizes(_user$project$MouseToColor$Resize)
+				_elm_lang$window$Window$resizes(_user$project$MouseToColor$Resize),
+				A2(_elm_lang$core$Time$every, _elm_lang$core$Time$second, _user$project$MouseToColor$Tick)
 			]));
 };
 var _user$project$MouseToColor$main = {

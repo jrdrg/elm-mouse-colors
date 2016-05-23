@@ -6,6 +6,7 @@ import Html.Attributes
 import Mouse
 import Window
 import Task
+import Time exposing (Time, second, inSeconds)
 
 
 type alias Position = { x: Int, y: Int }
@@ -19,12 +20,13 @@ type alias Model =
     position: Position,
     center: Position,
     color: String,
+    tick: Int,
     textColor: String,
     text: String
   }
 
 type Msg =
-  Move Position | Click | Resize Size
+  Move Position | Click | Resize Size | Tick Time
 
 
 main: Program Never
@@ -129,6 +131,7 @@ init =
     ({position = Position 0 0,
       center = Position 0 0,
       color = "#fff",
+      tick = 0,
       textColor = "#000",
       text = "test"
     }, initialSizeCmd)
@@ -138,8 +141,18 @@ subscriptions: Model -> Sub Msg
 subscriptions model =
   Sub.batch [
         Mouse.moves Move,
-        Window.resizes Resize
+        Window.resizes Resize,
+        Time.every second Tick
        ]
+
+
+
+getValue: Int -> Float
+getValue tick =
+  let
+    v = abs (tick - 60)
+  in
+    v / 60
 
 
 update: Msg -> Model -> (Model, Cmd Msg)
@@ -149,14 +162,14 @@ update msg model =
       let
         (distance, angle) = fromCenter model.center position
         relativeDistance = min (distance / toFloat(model.center.x)) 1.0
-        color = rgbToHexString (hsvToRgb angle relativeDistance 1.0)
+        color = rgbToHexString (hsvToRgb angle relativeDistance (getValue model.tick))
         textColor = rgbToHexString (hsvToRgb angle relativeDistance 0.8)
       in
         ({model |
             position = position,
             color = "#" ++ color,
-            textColor = "#" ++ textColor,
-            text = toString(angle) ++ "     Dist:" ++ toString(relativeDistance) ++ "  COLOR: " ++ color
+            textColor = "#" ++ textColor
+            -- text = toString(angle) ++ "     Dist:" ++ toString(relativeDistance) ++ "  COLOR: " ++ color
          }, Cmd.none)
 
     Click ->
@@ -166,6 +179,20 @@ update msg model =
       ({model |
           center = getCenter size
        }, Cmd.none)
+
+    Tick time ->
+      let
+        tick = (model.tick + 5) % 120
+        value = getValue tick
+        (distance, angle) = fromCenter model.center model.position
+        relativeDistance = min (distance / toFloat(model.center.x)) 1.0
+        color = rgbToHexString (hsvToRgb angle relativeDistance value)
+      in
+        ({model |
+            tick = tick,
+            color = "#" ++ color,
+            text = toString value
+         }, Cmd.none)
 
 
 view: Model -> Html Msg
